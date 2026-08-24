@@ -55,7 +55,7 @@ function QRCodeGeneratorContent() {
 
   // Toast management
   const showToast = (message: string, type: ToastType) => {
-    const id = `${Date.now()}-${Math.random()}`;
+    const id = crypto.randomUUID();
     setToasts(prev => [...prev, { id, message, type }]);
   };
 
