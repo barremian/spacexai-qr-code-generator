@@ -783,7 +783,8 @@ function QRCodeGeneratorContent() {
                     size={120}
                     bgColor="var(--card-background)"
                     fgColor="white"
-                    logoImage="/cursor-logo-bw.png"
+                    ecLevel="H"
+                    logoImage="/spacexai-logo-bw.png"
                     logoWidth={32}
                     logoOpacity={1}
                     logoPadding={0}
@@ -926,14 +927,15 @@ function QRCodeGeneratorContent() {
                           return (
                             <div key={`${rowIndex}-${colIndex}`} className="print-qr-item">
                               <div className="qr-number">#{cellNumber}</div>
-                              <img src="/LOCKUP_HORIZONTAL_2D_LIGHT.svg" alt="Cursor" className="qr-logo" />
+                              <img src="/spacexai-wordmark-logo.png" alt="SpaceXAI" className="qr-logo" />
                               {qrData.isValid ? (
                               <QRCode 
                                 value={qrData.url} 
                                 size={180}
                                 bgColor="white"
                                 fgColor="black"
-                                logoImage="/cursor-logo-bw.png"
+                                ecLevel="H"
+                                logoImage="/spacexai-logo-bw.png"
                                 logoWidth={50}
                                 logoOpacity={1}
                                 logoPadding={0}
@@ -1044,7 +1046,7 @@ function QRCodeGeneratorContent() {
               position: absolute;
               top: 8px;
               right: 8px;
-              width: 75px;
+              width: 140px;
               height: auto;
               opacity: 0.9;
             }
