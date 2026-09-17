@@ -34,6 +34,12 @@ const GRID_ROWS = 3;
 const GRID_COLS = 3;
 const CELLS_PER_PAGE = GRID_ROWS * GRID_COLS;
 
+// Print QR layout (CSS px). Logo is overlaid as an <img> so the PDF
+// rasterizes the original PNG instead of the downscaled canvas bitmap.
+const PRINT_QR_SIZE = 180;
+const PRINT_QR_QUIET_ZONE = 10;
+const PRINT_LOGO_SIZE = 50;
+
 // Calculate the number for a specific cell position using cut-and-stack collation
 function numberForCell(p: number, r: number, c: number, R: number, C: number, N: number): number | null {
   const S = R * C;
@@ -116,7 +122,7 @@ function QRCodeGeneratorContent() {
     try {
       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
       const hostname = urlObj.hostname.toLowerCase();
-      
+
       // Warn about IP addresses (potential phishing)
       if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
         return { hasWarning: true, message: 'Warning: IP address detected (verify source)' };
@@ -136,7 +142,7 @@ function QRCodeGeneratorContent() {
 
   const isValidUrl = (url: string): boolean => {
     if (!url || url.trim().length === 0) return false;
-    
+
     // First check scheme
     if (!isValidUrlScheme(url)) {
       return false;
@@ -165,7 +171,7 @@ function QRCodeGeneratorContent() {
 
   const generateQRCodes = () => {
     setIsProcessing(true);
-    
+
     try {
       const linkList = links
         .split('\n')
@@ -290,7 +296,7 @@ function QRCodeGeneratorContent() {
         complete: (results) => {
           try {
             const urls: string[] = [];
-            
+
             // Extract URLs from CSV, skip header row
             for (let i = 0; i < results.data.length; i++) {
               const row = results.data[i] as string[];
@@ -298,7 +304,7 @@ function QRCodeGeneratorContent() {
                 // Skip header row
                 continue;
               }
-              
+
               // Check if this looks like a split Cursor URL format
               let foundReferral = false;
               for (let j = 0; j < row.length; j++) {
@@ -311,7 +317,7 @@ function QRCodeGeneratorContent() {
                   break;
                 }
               }
-              
+
               // If we didn't find a referral column, check if it's a standard complete URL
               if (!foundReferral && row[0] && row[0].trim()) {
                 const url = row[0].trim();
@@ -345,7 +351,7 @@ function QRCodeGeneratorContent() {
             }
 
             setLinks(urls.slice(0, MAX_QR_CODES).join('\n'));
-            
+
             // Auto-generate QR codes
             setTimeout(() => {
               const linkList = urls.slice(0, MAX_QR_CODES);
@@ -422,10 +428,10 @@ function QRCodeGeneratorContent() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      
+
       // Security: Validate file type
       if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
         handleFileUpload(file);
@@ -448,7 +454,7 @@ function QRCodeGeneratorContent() {
 
   // Options View - Choose between Upload or Manual Entry
   const renderOptionsView = () => (
-    <motion.div 
+    <motion.div
       className="flex-1 flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -456,7 +462,7 @@ function QRCodeGeneratorContent() {
       transition={{ duration: 0.3 }}
     >
       <div className="text-center max-w-lg mx-auto px-6">
-        <motion.h1 
+        <motion.h1
           className="headline text-4xl font-bold text-white mb-4"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -464,8 +470,8 @@ function QRCodeGeneratorContent() {
         >
           <span style={{ color: 'var(--accent-blue)' }}>Cursor Credits</span> QR Code Generator
         </motion.h1>
-        <motion.p 
-          className="text-lg mb-4" 
+        <motion.p
+          className="text-lg mb-4"
           style={{ color: 'var(--secondary-text)' }}
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -473,8 +479,8 @@ function QRCodeGeneratorContent() {
         >
           Generate QR codes for your referral links
         </motion.p>
-        
-        <motion.div 
+
+        <motion.div
           className="space-y-4"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -489,7 +495,7 @@ function QRCodeGeneratorContent() {
           >
             Upload CSV File
           </motion.button>
-          
+
           <motion.button
             onClick={() => setCurrentView('manual')}
             className="btn-secondary w-full py-4 px-6 rounded-lg text-lg font-medium"
@@ -506,8 +512,8 @@ function QRCodeGeneratorContent() {
 
   // Upload View - File Upload Interface
   const renderUploadView = () => (
-    <motion.div 
-      className="min-h-screen" 
+    <motion.div
+      className="min-h-screen"
       style={{ background: 'var(--background)' }}
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
@@ -517,15 +523,15 @@ function QRCodeGeneratorContent() {
       <div className="container mx-auto px-6 py-8 max-w-2xl">
         <motion.button
           onClick={goBack}
-          className="mb-6 text-sm" 
+          className="mb-6 text-sm"
           style={{ color: 'var(--secondary-text)' }}
           whileHover={{ x: -3, color: 'var(--accent-blue)' }}
           transition={{ type: "spring", stiffness: 500, damping: 25 }}
         >
           ← Back
         </motion.button>
-        
-        <motion.h2 
+
+        <motion.h2
           className="text-2xl font-semibold text-white mb-8"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -533,8 +539,8 @@ function QRCodeGeneratorContent() {
         >
           Upload CSV File
         </motion.h2>
-        
-        <motion.div 
+
+        <motion.div
           className={`upload-area border-2 border-dashed rounded-lg p-12 text-center transition-all ${
             dragActive ? 'drag-active' : ''
           } ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
@@ -558,8 +564,8 @@ function QRCodeGeneratorContent() {
             </motion.div>
           ) : (
             <>
-              <motion.div 
-                className="mb-4" 
+              <motion.div
+                className="mb-4"
                 style={{ color: 'var(--accent-blue)' }}
                 animate={{ rotate: dragActive ? 3 : 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
@@ -603,8 +609,8 @@ function QRCodeGeneratorContent() {
 
   // Manual Entry View
   const renderManualView = () => (
-    <motion.div 
-      className="min-h-screen" 
+    <motion.div
+      className="min-h-screen"
       style={{ background: 'var(--background)' }}
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
@@ -621,8 +627,8 @@ function QRCodeGeneratorContent() {
         >
           ← Back
         </motion.button>
-        
-        <motion.h2 
+
+        <motion.h2
           className="text-2xl font-semibold text-white mb-8"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -630,11 +636,11 @@ function QRCodeGeneratorContent() {
         >
           Enter Links
         </motion.h2>
-        
+
         <motion.textarea
           className="w-full h-64 p-4 rounded-lg resize-none text-white"
-          style={{ 
-            background: 'var(--card-background)', 
+          style={{
+            background: 'var(--card-background)',
             border: '1px solid var(--border-color)'
           }}
           placeholder={`Enter your Cursor referral links, one per line:\n\n${CURSOR_BASE_URL}referral?code=EXAMPLE1\n${CURSOR_BASE_URL}referral?code=EXAMPLE2\n${CURSOR_BASE_URL}referral?code=EXAMPLE3`}
@@ -645,8 +651,8 @@ function QRCodeGeneratorContent() {
           transition={{ duration: 0.2, delay: 0.1 }}
           whileFocus={{ scale: 1.01, borderColor: 'var(--accent-blue)' }}
         />
-        
-        <motion.div 
+
+        <motion.div
           className="flex gap-4 mt-6"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -669,8 +675,8 @@ function QRCodeGeneratorContent() {
 
   // QR Codes Results View
   const renderResultsView = () => (
-    <motion.div 
-      className="min-h-screen" 
+    <motion.div
+      className="min-h-screen"
       style={{ background: 'var(--background)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -687,8 +693,8 @@ function QRCodeGeneratorContent() {
         >
           ← Back
         </motion.button>
-        
-        <motion.div 
+
+        <motion.div
           className="flex justify-between items-center mb-4"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -697,7 +703,7 @@ function QRCodeGeneratorContent() {
           <h2 className="text-2xl font-semibold text-white">
             QR Codes ({qrCodes.length})
           </h2>
-          
+
           <div className="flex gap-3">
             <motion.button
               onClick={handlePrint}
@@ -719,8 +725,8 @@ function QRCodeGeneratorContent() {
             </motion.button>
           </div>
         </motion.div>
-        
-        <motion.p 
+
+        <motion.p
           className="text-xs mb-8 text-center px-4 py-2 rounded-lg"
           style={{ color: 'var(--secondary-text)', backgroundColor: 'rgba(37, 99, 235, 0.1)', border: '1px solid rgba(37, 99, 235, 0.2)' }}
           initial={{ y: 10, opacity: 0 }}
@@ -729,32 +735,32 @@ function QRCodeGeneratorContent() {
         >
           💡 Numbers are positioned for easy stacking: after printing, cut pages into squares and stack by position for perfect order
         </motion.p>
-        
-        <motion.div 
+
+        <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.2, delay: 0.1 }}
         >
           {qrCodes.map((qr, index) => (
-            <motion.div 
-              key={qr.id} 
-              className="qr-item rounded-lg p-4 text-center" 
-              style={{ 
-                background: 'var(--card-background)', 
+            <motion.div
+              key={qr.id}
+              className="qr-item rounded-lg p-4 text-center"
+              style={{
+                background: 'var(--card-background)',
                 border: qr.hasWarning ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid var(--border-color)'
               }}
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ 
-                duration: 0.15, 
+              transition={{
+                duration: 0.15,
                 delay: index * 0.02,
                 type: "spring",
                 stiffness: 500,
                 damping: 25
               }}
-              whileHover={{ 
-                scale: 1.02, 
+              whileHover={{
+                scale: 1.02,
                 y: -2,
                 borderColor: qr.hasWarning ? 'rgba(245, 158, 11, 0.8)' : 'var(--accent-blue)',
                 boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
@@ -765,8 +771,8 @@ function QRCodeGeneratorContent() {
                 #{qr.id}
               </div>
               {qr.hasWarning && (
-                <div className="text-xs mb-2 px-2 py-1 rounded" style={{ 
-                  backgroundColor: 'rgba(245, 158, 11, 0.2)', 
+                <div className="text-xs mb-2 px-2 py-1 rounded" style={{
+                  backgroundColor: 'rgba(245, 158, 11, 0.2)',
                   color: '#f59e0b'
                 }}>
                   ⚠️ {qr.warningMessage}
@@ -778,8 +784,8 @@ function QRCodeGeneratorContent() {
                   whileHover={{ scale: 1.03 }}
                   transition={{ type: "spring", stiffness: 500, damping: 25 }}
                 >
-                  <QRCode 
-                    value={qr.url} 
+                  <QRCode
+                    value={qr.url}
                     size={120}
                     bgColor="var(--card-background)"
                     fgColor="white"
@@ -799,8 +805,8 @@ function QRCodeGeneratorContent() {
                 </div>
               )}
               <div className="break-all qr-card-text qr-card-url">
-                {sanitizeUrlForDisplay(qr.url).length > 40 
-                  ? sanitizeUrlForDisplay(qr.url).substring(0, 40) + '...' 
+                {sanitizeUrlForDisplay(qr.url).length > 40
+                  ? sanitizeUrlForDisplay(qr.url).substring(0, 40) + '...'
                   : sanitizeUrlForDisplay(qr.url)}
               </div>
             </motion.div>
@@ -831,20 +837,20 @@ function QRCodeGeneratorContent() {
                       <span>Made with</span>
                       <span className="text-red-400">♥</span>
                       <span>by</span>
-                      <a 
-                        href="https://github.com/yayaq1" 
-                        target="_blank" 
+                      <a
+                        href="https://github.com/yayaq1"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
                       >
                         yayaq1
                       </a>
                     </div>
-                    
+
                     <div className="flex items-center gap-4">
-                      <a 
-                        href="https://github.com/yayaq1/qr-code-generator" 
-                        target="_blank" 
+                      <a
+                        href="https://github.com/yayaq1/qr-code-generator"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                       >
@@ -853,10 +859,10 @@ function QRCodeGeneratorContent() {
                         </svg>
                         <span>Contribute</span>
                       </a>
-                      
-                      <a 
-                        href="https://cursor.com" 
-                        target="_blank" 
+
+                      <a
+                        href="https://cursor.com"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-purple-400 transition-colors"
                       >
@@ -885,21 +891,21 @@ function QRCodeGeneratorContent() {
               {Array.from({ length: Math.ceil(qrCodes.length / CELLS_PER_PAGE) }, (_, pageIndex) => {
                 // Create a lookup map for QR data by original ID
                 const qrLookup = new Map(qrCodes.map(qr => [qr.id, qr]));
-                
+
                 return (
                   <div key={pageIndex} className="print-page">
                     <div className="print-grid">
                       {Array.from({ length: GRID_ROWS }, (_, rowIndex) =>
                         Array.from({ length: GRID_COLS }, (_, colIndex) => {
                           const cellNumber = numberForCell(
-                            pageIndex, 
-                            rowIndex, 
-                            colIndex, 
-                            GRID_ROWS, 
-                            GRID_COLS, 
+                            pageIndex,
+                            rowIndex,
+                            colIndex,
+                            GRID_ROWS,
+                            GRID_COLS,
                             qrCodes.length
                           );
-                          
+
                           if (cellNumber === null) {
                             // Empty cell - maintain grid structure
                             return (
@@ -910,7 +916,7 @@ function QRCodeGeneratorContent() {
                               </div>
                             );
                           }
-                          
+
                           // Find the QR data for this cell number
                           const qrData = qrLookup.get(cellNumber);
                           if (!qrData) {
@@ -923,26 +929,35 @@ function QRCodeGeneratorContent() {
                               </div>
                             );
                           }
-                          
+
                           return (
                             <div key={`${rowIndex}-${colIndex}`} className="print-qr-item">
                               <div className="qr-number">#{cellNumber}</div>
                               <img src="/spacexai-wordmark-logo.png" alt="SpaceXAI" className="qr-logo" />
                               {qrData.isValid ? (
-                              <QRCode 
-                                value={qrData.url} 
-                                size={180}
-                                bgColor="white"
-                                fgColor="black"
-                                ecLevel="H"
-                                logoImage="/spacexai-logo-bw.png"
-                                logoWidth={50}
-                                logoOpacity={1}
-                                logoPadding={0}
-                                logoPaddingStyle="square"
-                                removeQrCodeBehindLogo={true}
-                                qrStyle="squares"
-                              />
+                              <div className="print-qr-code">
+                                <QRCode
+                                  value={qrData.url}
+                                  size={PRINT_QR_SIZE}
+                                  quietZone={PRINT_QR_QUIET_ZONE}
+                                  bgColor="white"
+                                  fgColor="black"
+                                  ecLevel="H"
+                                  logoImage="/spacexai-logo-bw.png"
+                                  logoWidth={PRINT_LOGO_SIZE}
+                                  logoHeight={PRINT_LOGO_SIZE}
+                                  logoOpacity={0}
+                                  logoPadding={0}
+                                  logoPaddingStyle="square"
+                                  removeQrCodeBehindLogo={true}
+                                  qrStyle="squares"
+                                />
+                                <img
+                                  src="/spacexai-logo-bw.png"
+                                  alt=""
+                                  className="print-qr-embedded-logo"
+                                />
+                              </div>
                               ) : (
                                 <div className="qr-error">
                                   Invalid URL
@@ -1054,6 +1069,29 @@ function QRCodeGeneratorContent() {
             .qr-code {
               margin: 4px auto;
               display: block;
+            }
+
+            .print-qr-code {
+              position: relative;
+              width: ${PRINT_QR_SIZE + PRINT_QR_QUIET_ZONE * 2}px;
+              height: ${PRINT_QR_SIZE + PRINT_QR_QUIET_ZONE * 2}px;
+              margin: 4px auto;
+            }
+
+            .print-qr-code canvas {
+              width: 100% !important;
+              height: 100% !important;
+              display: block;
+            }
+
+            .print-qr-embedded-logo {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              width: ${PRINT_LOGO_SIZE}px;
+              height: ${PRINT_LOGO_SIZE}px;
+              transform: translate(-50%, -50%);
+              image-rendering: auto;
             }
 
             .qr-url {
