@@ -40,6 +40,9 @@ const PRINT_QR_SIZE = 180;
 const PRINT_QR_QUIET_ZONE = 10;
 const PRINT_LOGO_SIZE = 50;
 
+const EXPORT_QR_SIZE = 2048;
+const EXPORT_LOGO_SIZE = Math.round(EXPORT_QR_SIZE * 0.2);
+
 // Calculate the number for a specific cell position using cut-and-stack collation
 function numberForCell(p: number, r: number, c: number, R: number, C: number, N: number): number | null {
   const S = R * C;
@@ -58,6 +61,8 @@ function QRCodeGeneratorContent() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const printRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const exportQrRef = useRef<QRCode>(null);
+  const [pngExport, setPngExport] = useState<{ id: number; url: string } | null>(null);
 
   // Toast management
   const showToast = (message: string, type: ToastType) => {
@@ -238,6 +243,11 @@ function QRCodeGeneratorContent() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSavePng = (qr: QRCodeData) => {
+    if (!qr.isValid) return;
+    setPngExport({ id: qr.id, url: qr.url });
   };
 
   const clearAll = () => {
@@ -809,6 +819,19 @@ function QRCodeGeneratorContent() {
                   ? sanitizeUrlForDisplay(qr.url).substring(0, 40) + '...'
                   : sanitizeUrlForDisplay(qr.url)}
               </div>
+              {qr.isValid && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSavePng(qr);
+                  }}
+                  className="btn-secondary mt-3 px-4 py-1.5 rounded-lg text-xs font-medium"
+                  disabled={pngExport !== null}
+                >
+                  {pngExport?.id === qr.id ? 'Saving…' : 'Save PNG'}
+                </button>
+              )}
             </motion.div>
           ))}
         </motion.div>
@@ -819,6 +842,39 @@ function QRCodeGeneratorContent() {
   return (
     <>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+      {pngExport && (
+        <div className="fixed -left-[9999px] top-0 print:hidden" aria-hidden="true">
+          <QRCode
+            key={pngExport.id}
+            ref={exportQrRef}
+            id="qr-export-canvas"
+            value={pngExport.url}
+            size={EXPORT_QR_SIZE}
+            bgColor="#ffffff"
+            fgColor="#000000"
+            ecLevel="H"
+            logoImage="/spacexai-logo-bw.png"
+            logoWidth={EXPORT_LOGO_SIZE}
+            logoOpacity={1}
+            logoPadding={0}
+            logoPaddingStyle="square"
+            removeQrCodeBehindLogo={true}
+            qrStyle="squares"
+            logoOnLoad={() => {
+              try {
+                exportQrRef.current?.download(
+                  'png',
+                  `qr-${String(pngExport.id).padStart(3, '0')}.png`
+                );
+              } catch {
+                showToast('Failed to save PNG. Please try again.', 'error');
+              } finally {
+                setPngExport(null);
+              }
+            }}
+          />
+        </div>
+      )}
       <div className="min-h-screen" style={{ background: 'var(--background)' }}>
         {/* Screen View */}
         <div className="print:hidden">
